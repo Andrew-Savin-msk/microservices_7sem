@@ -64,9 +64,5 @@ jobs:
           folder-id: ${{ secrets.YC_FOLDER_ID }}
           revision-image-url: cr.yandex/${{ secrets.YC_REGISTRY_ID }}/order-service:latest
           revision-service-account-id: ${{ secrets.YC_SA_ID }}
-          # добавь нужные ENV-переменные здесь (если не нужны — оставь только APP_ENV)
           revision-env: |
             APP_ENV=prod
-            # POSTGRES_URL=${{ secrets.ENV_POSTGRES_URL }}
-            # AMQP_URL=${{ secrets.ENV_AMQP_URL }}
-            # USER_SERVICE_URL=${{ secrets.ENV_USER_SERVICE_URL }}
