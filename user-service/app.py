@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, Session, declarative_base
 import os
 
-app = FastAPI()
+app = FastAPI(title = "User Service")
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/userdb") 
 engine = create_engine(DATABASE_URL)

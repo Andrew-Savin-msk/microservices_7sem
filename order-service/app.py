@@ -6,7 +6,7 @@ from pika.credentials import PlainCredentials
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, Session, declarative_base
 
-app = FastAPI()
+app = FastAPI(title="Order Service")
 
 RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'localhost')
 USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://localhost:8000')
