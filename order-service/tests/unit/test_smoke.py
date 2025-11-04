@@ -4,6 +4,11 @@ import types
 import pytest
 from fastapi.testclient import TestClient
 
+# в tests/*/test_*.py
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
+
 # Используем файловую SQLite, чтобы не плодить внешние зависимости в unit
 os.environ.setdefault("DATABASE_URL", "sqlite:///./test_unit.db")
 

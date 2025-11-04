@@ -1,7 +1,12 @@
 import os
+# в tests/*/test_*.py
+import sys, os
+
 import importlib
 import pytest
 from fastapi.testclient import TestClient
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 # В CI мы прокинем DATABASE_URL на postgres://... через env.
 # Если переменная не установлена — эти тесты можно пропустить локально.

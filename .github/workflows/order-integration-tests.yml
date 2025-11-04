@@ -1,19 +1,8 @@
-name: Integration tests (order-service + Postgres)
-
-on:
-  push:
-    branches: [ "main", "master" ]
-    paths:
-      - "order-service/**"
-      - ".github/workflows/order-integration-tests.yml"
-  pull_request:
-    branches: [ "main", "master" ]
-    paths:
-      - "order-service/**"
-
+# .github/workflows/order-integration-tests.yml
 jobs:
   integration:
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:15
@@ -28,9 +17,11 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+      PYTHONPATH: ./order-service           # 👈 чтобы import app находился из корня
 
     defaults:
-      run: { working-directory: ./order-service }
+      run:
+        working-directory: ./order-service  # 👈 чтобы pytest запускался внутри сервиса
 
     steps:
       - uses: actions/checkout@v4
@@ -40,4 +31,6 @@ jobs:
       - name: Wait for DB
         run: |
           for i in {1..30}; do pg_isready -h localhost -p 5432 -U postgres && break; sleep 1; done
+      - name: Sanity: import app
+        run: python -c "import app,sys,os; print('cwd=',os.getcwd()); print('app=',app.__file__); print('path0=',sys.path[0])"
       - run: pytest tests/integration -q
