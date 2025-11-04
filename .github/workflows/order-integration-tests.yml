@@ -1,0 +1,43 @@
+name: Integration tests (order-service + Postgres)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths:
+      - "order-service/**"
+      - ".github/workflows/order-integration-tests.yml"
+  pull_request:
+    branches: [ "main", "master" ]
+    paths:
+      - "order-service/**"
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        ports: [ "5432:5432" ]
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s --health-timeout=5s --health-retries=5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+
+    defaults:
+      run: { working-directory: ./order-service }
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install -r requirements.txt pytest
+      - name: Wait for DB
+        run: |
+          for i in {1..30}; do pg_isready -h localhost -p 5432 -U postgres && break; sleep 1; done
+      - run: pytest tests/integration -q
