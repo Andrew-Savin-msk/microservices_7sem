@@ -1,23 +1,36 @@
-jobs:
+name: Integration tests (order-service + Postgres)
+
+on:
   push:
-      branches: [ "main", "master" ]
-      paths:
-        - "order-service/**"
-        - ".github/workflows/order-integration-tests.yml"
+    branches: [ "main", "master" ]
+    paths:
+      - "order-service/**"
+      - ".github/workflows/order-integration-tests.yml"
+  pull_request:
+    branches: [ "main", "master" ]
+    paths:
+      - "order-service/**"
+  workflow_dispatch: {}
+
+jobs:
   integration:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     services:
       postgres:
         image: postgres:15
-        ports: [ "5432:5432" ]
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: test_db
         options: >-
           --health-cmd="pg_isready -U postgres"
-          --health-interval=10s --health-timeout=5s --health-retries=5
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+        ports:
+          - 5432:5432
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
@@ -30,11 +43,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
+        with:
+          python-version: '3.12'
       - run: pip install -r requirements.txt pytest httpx
       - name: Wait for DB
         run: |
-          for i in {1..30}; do pg_isready -h localhost -p 5432 -U postgres && break; sleep 1; done
-      - name: Sanity: import app
-        run: python -c "import app,sys,os; print('cwd=',os.getcwd()); print('app=',app.__file__); print('path0=',sys.path[0])"
-      - run: pytest tests/integration -q
+          for i in {1..60}; do pg_isready -h localhost -p 5432 -U postgres && break; sleep 1; done
+      - name: Run integration tests
+        run: pytest tests/integration -q
