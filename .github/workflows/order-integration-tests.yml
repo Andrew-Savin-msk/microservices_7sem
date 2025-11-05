@@ -1,5 +1,9 @@
-# .github/workflows/order-integration-tests.yml
 jobs:
+  push:
+      branches: [ "main", "master" ]
+      paths:
+        - "order-service/**"
+        - ".github/workflows/order-integration-tests.yml"
   integration:
     runs-on: ubuntu-latest
 
@@ -17,11 +21,11 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-      PYTHONPATH: ./order-service           # 👈 чтобы import app находился из корня
+      PYTHONPATH: ./order-service
 
     defaults:
       run:
-        working-directory: ./order-service  # 👈 чтобы pytest запускался внутри сервиса
+        working-directory: ./order-service
 
     steps:
       - uses: actions/checkout@v4

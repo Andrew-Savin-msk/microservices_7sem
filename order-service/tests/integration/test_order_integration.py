@@ -1,5 +1,4 @@
 import os
-# в tests/*/test_*.py
 import sys, os
 
 import importlib
@@ -8,14 +7,11 @@ from fastapi.testclient import TestClient
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-# В CI мы прокинем DATABASE_URL на postgres://... через env.
-# Если переменная не установлена — эти тесты можно пропустить локально.
 pytestmark = pytest.mark.skipif(
     "DATABASE_URL" not in os.environ,
     reason="DATABASE_URL not provided (run in CI or export env before run)"
 )
 
-# Импортируем приложение уже с установленным DATABASE_URL (из окружения)
 app_module = importlib.import_module("app")
 client = TestClient(app_module.app)
 
@@ -26,7 +22,6 @@ def clean_db():
     yield
 
 def test_create_persists_in_db(monkeypatch):
-    # Мокаем user-service и RabbitMQ
     import requests
     class OK:
         def json(self): return {"address": "Real DB Addr"}
@@ -38,7 +33,6 @@ def test_create_persists_in_db(monkeypatch):
     assert r.status_code == 200
     oid = r.json()["order"]["id"]
 
-    # Проверяем, что запись реально появилась в базе
     s = app_module.SessionLocal()
     try:
         row = s.query(app_module.Order).get(oid)

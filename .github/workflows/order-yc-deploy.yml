@@ -7,7 +7,6 @@ on:
       - "order-service/**"
       - ".github/workflows/order-yc-deploy.yml"
 
-# чтобы параллельные пуши не накладывались
 concurrency:
   group: order-yc-deploy-${{ github.ref }}
   cancel-in-progress: true
