@@ -1,0 +1,5 @@
+Просто:
+pytest */tests/component/ -v
+
+Детально:
+pytest */tests/component/ -vvv -s --tb=long --log-cli-level=DEBUG --setup-show
