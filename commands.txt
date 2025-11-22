@@ -3,3 +3,6 @@ pytest */tests/component/ -v
 
 Детально:
 pytest */tests/component/ -vvv -s --tb=long --log-cli-level=DEBUG --setup-show
+
+python3 -m venv .venv
+source .venv/bin/activate
