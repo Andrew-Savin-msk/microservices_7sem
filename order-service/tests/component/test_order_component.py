@@ -46,7 +46,6 @@ def _init_app():
 
 @pytest.fixture(autouse=True)
 def _skip_if_import_failed(_init_app):
-    """Пропускаем тесты, если не удалось импортировать приложение."""
     if IMPORT_ERROR is not None:
         pytest.skip(f"Не удалось инициализировать приложение: {IMPORT_ERROR}")
     yield
@@ -54,7 +53,6 @@ def _skip_if_import_failed(_init_app):
 
 @pytest.fixture(autouse=True)
 def clean_db(_init_app):
-    """Очистка БД перед каждым тестом для изоляции."""
     Base = getattr(app_module, "Base", None)
     engine = getattr(app_module, "engine", None)
     if Base is not None and engine is not None:
@@ -65,7 +63,6 @@ def clean_db(_init_app):
 
 @pytest.fixture(autouse=True)
 def mock_external_services(monkeypatch):
-    """Мокируем внешние зависимости (user-service, RabbitMQ)."""
     import requests
     class MockUserResponse:
         def json(self):
@@ -80,10 +77,6 @@ def mock_external_services(monkeypatch):
 
 
 def test_create_order_and_get_orders_component(_init_app):
-    """
-    Компонентный тест: создание заказа и получение списка заказов пользователя.
-    Проверяет полный happy-path: POST /create_order -> GET /orders/{user_id}
-    """
     user_id = 1
     items = "Product A:2, Product B:1"
     
@@ -134,10 +127,6 @@ def test_create_order_and_get_orders_component(_init_app):
 
 
 def test_create_order_and_update_status_component(_init_app):
-    """
-    Компонентный тест: создание заказа -> обновление статуса заказа.
-    Проверяет полный цикл работы с заказом.
-    """
     user_id = 2
     items = "Product C:3"
     
