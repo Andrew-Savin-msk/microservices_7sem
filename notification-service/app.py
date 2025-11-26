@@ -1,12 +1,21 @@
 import pika
 from pika.credentials import PlainCredentials
 import os
+import sys
 import time
+
+# Добавляем путь к common модулю
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from common.logging_config import setup_logging
 
 # === Настройки из переменных окружения ===
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq")
 RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
 RABBITMQ_PASS = os.getenv("RABBITMQ_PASS", "guest123")
+
+# Настройка логирования
+logger = setup_logging("notification-service")
 
 # === Функция подключения с ретраем ===
 def connect():
@@ -14,14 +23,14 @@ def connect():
     attempt = 1
     while True:
         try:
-            print(f"[NOTIFICATION] Connecting to RabbitMQ (attempt {attempt})...")
+            logger.info(f"Connecting to RabbitMQ (attempt {attempt})...")
             connection = pika.BlockingConnection(
                 pika.ConnectionParameters(host=RABBITMQ_HOST, credentials=credentials)
             )
-            print("[NOTIFICATION] Connected to RabbitMQ ✅")
+            logger.info("Connected to RabbitMQ successfully")
             return connection
         except pika.exceptions.AMQPConnectionError as e:
-            print(f"[NOTIFICATION] RabbitMQ not ready ({e}). Retrying in 5s...")
+            logger.warning(f"RabbitMQ not ready ({e}). Retrying in 5s...")
             attempt += 1
             time.sleep(5)
 
@@ -39,7 +48,7 @@ for ex in exchanges:
 
     # Обработчик для fanout
     def handle_event(ch, method, properties, body, ex=ex):
-        print(f"[{ex.upper()} EVENT] {body.decode()}")
+        logger.info(f"Received event from {ex}: {body.decode()}")
 
     channel.basic_consume(queue=queue_name, on_message_callback=handle_event, auto_ack=True)
 
@@ -47,9 +56,9 @@ for ex in exchanges:
 channel.queue_declare(queue='notifications', durable=True)
 
 def handle_notify(ch, method, properties, body):
-    print(f"[NOTIFY] {body.decode()}")
+    logger.info(f"Notification received: {body.decode()}")
 
 channel.basic_consume(queue='notifications', on_message_callback=handle_notify, auto_ack=True)
 
-print("[NOTIFICATION SERVICE] Waiting for messages...")
+logger.info("Notification Service started, waiting for messages...")
 channel.start_consuming()

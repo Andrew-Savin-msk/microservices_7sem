@@ -1,0 +1,47 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'microservices'
+    environment: 'development'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'user-service'
+    static_configs:
+      - targets: ['user-service:8000']
+        labels:
+          service: 'user-service'
+    metrics_path: '/metrics'
+
+  - job_name: 'order-service'
+    static_configs:
+      - targets: ['order-service:8001']
+        labels:
+          service: 'order-service'
+    metrics_path: '/metrics'
+
+  - job_name: 'catalog-service'
+    static_configs:
+      - targets: ['catalog-service:8000']
+        labels:
+          service: 'catalog-service'
+    metrics_path: '/metrics'
+
+  - job_name: 'payment-service'
+    static_configs:
+      - targets: ['payment-service:8000']
+        labels:
+          service: 'payment-service'
+    metrics_path: '/metrics'
+
+  - job_name: 'delivery-service'
+    static_configs:
+      - targets: ['delivery-service:8000']
+        labels:
+          service: 'delivery-service'
+    metrics_path: '/metrics'
+

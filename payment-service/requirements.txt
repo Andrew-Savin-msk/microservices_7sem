@@ -4,3 +4,4 @@ sqlalchemy
 psycopg2-binary
 requests
 pika
+prometheus_client

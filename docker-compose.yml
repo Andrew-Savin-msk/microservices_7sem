@@ -1,4 +1,3 @@
-version: '3'
 services:
   db:
     image: postgres:13
@@ -15,7 +14,9 @@ services:
       retries: 5
 
   user-service:
-    build: ./user-service
+    build:
+      context: .
+      dockerfile: ./user-service/Dockerfile
     ports:
       - "8000:8000"
     depends_on:
@@ -25,7 +26,9 @@ services:
       DATABASE_URL: postgresql://user:password@db:5432/userdb
 
   order-service:
-    build: ./order-service
+    build:
+      context: .
+      dockerfile: ./order-service/Dockerfile
     ports:
       - "8001:8001"
     depends_on:
@@ -34,6 +37,7 @@ services:
     environment:
       RABBITMQ_HOST: rabbitmq
       USER_SERVICE_URL: http://user-service:8000
+      PORT: 8001
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -45,7 +49,9 @@ services:
       RABBITMQ_DEFAULT_PASS: guest123
 
   catalog-service:
-    build: ./catalog-service
+    build:
+      context: .
+      dockerfile: ./catalog-service/Dockerfile
     ports:
       - "8002:8000"
     depends_on:
@@ -58,7 +64,9 @@ services:
       RABBITMQ_HOST: rabbitmq
 
   payment-service:
-    build: ./payment-service
+    build:
+      context: .
+      dockerfile: ./payment-service/Dockerfile
     ports:
       - "8003:8000"
     depends_on:
@@ -71,7 +79,9 @@ services:
       RABBITMQ_HOST: rabbitmq
 
   delivery-service:
-    build: ./delivery-service
+    build:
+      context: .
+      dockerfile: ./delivery-service/Dockerfile
     ports:
       - "8004:8000"
     depends_on:
@@ -87,7 +97,9 @@ services:
       ORDER_SERVICE_URL: http://order-service:8001
 
   notification-service:
-    build: ./notification-service
+    build:
+      context: .
+      dockerfile: ./notification-service/Dockerfile
     depends_on:
       rabbitmq:
         condition: service_started
@@ -95,3 +107,78 @@ services:
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_USER: guest
       RABBITMQ_PASS: guest123
+
+  # Observability Stack
+  loki:
+    image: grafana/loki:2.9.0
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./logging/loki-config.yml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    user: "10001:10001"
+    networks:
+      - default
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    volumes:
+      - ./logging/promtail-config.yml:/etc/promtail/config.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - default
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    depends_on:
+      - user-service
+      - order-service
+      - catalog-service
+      - payment-service
+      - delivery-service
+    networks:
+      - default
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - default
+
+volumes:
+  loki-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  default:
+    driver: bridge
