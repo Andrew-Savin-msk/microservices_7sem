@@ -25,7 +25,6 @@ class JSONFormatter(logging.Formatter):
             "message": record.getMessage(),
         }
         
-        # Добавляем дополнительные поля, если они есть
         if hasattr(record, "request_id"):
             log_data["request_id"] = record.request_id
         if hasattr(record, "method"):
@@ -35,7 +34,6 @@ class JSONFormatter(logging.Formatter):
         if hasattr(record, "status_code"):
             log_data["status_code"] = record.status_code
         
-        # Добавляем exception info, если есть
         if record.exc_info:
             log_data["exception"] = self.formatException(record.exc_info)
         
@@ -56,15 +54,12 @@ def setup_logging(service_name: str, level: str = "INFO") -> logging.Logger:
     logger = logging.getLogger(service_name)
     logger.setLevel(getattr(logging, level.upper()))
     
-    # Удаляем существующие handlers, чтобы избежать дублирования
     logger.handlers.clear()
     
-    # Создаем handler для stdout
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(JSONFormatter(service_name))
     logger.addHandler(handler)
     
-    # Предотвращаем распространение логов в root logger
     logger.propagate = False
     
     return logger

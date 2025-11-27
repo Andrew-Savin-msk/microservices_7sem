@@ -14,16 +14,17 @@ scrape_configs:
       - host: unix:///var/run/docker.sock
         refresh_interval: 5s
     relabel_configs:
-      # Добавляем метки из Docker labels
+      # Извлекаем имя контейнера
       - source_labels: ['__meta_docker_container_name']
         regex: '/(.*)'
         target_label: 'container'
-      - source_labels: ['__meta_docker_container_log_stream']
-        target_label: 'stream'
-      # Используем название сервиса из Docker Compose
+      # Извлекаем название сервиса из Docker Compose
       - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
         target_label: 'service'
       # Оставляем только логи микросервисов
       - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
         regex: '.*-service|notification-service'
         action: keep
+      # Удаляем все служебные метки, оставляем только нужные
+      - action: labeldrop
+        regex: '__meta_docker.*|__.*'

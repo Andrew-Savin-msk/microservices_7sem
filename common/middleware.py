@@ -8,7 +8,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 import logging
 
-# Метрики Prometheus
 http_requests_total = Counter(
     'http_requests_total',
     'Total HTTP requests',
@@ -38,15 +37,12 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         self.logger = logger
     
     async def dispatch(self, request: Request, call_next):
-        # Генерируем request_id
         request_id = str(uuid.uuid4())
         
-        # Добавляем request_id в state для использования в обработчиках
         request.state.request_id = request_id
         
         start_time = time.time()
         
-        # Логируем начало запроса
         self.logger.info(
             f"Request started: {request.method} {request.url.path}",
             extra={
@@ -60,7 +56,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             process_time = time.time() - start_time
             
-            # Логируем завершение запроса
             self.logger.info(
                 f"Request completed: {request.method} {request.url.path} - {response.status_code}",
                 extra={
@@ -71,7 +66,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 }
             )
             
-            # Собираем метрики
             endpoint = request.url.path
             http_requests_total.labels(
                 method=request.method,
@@ -87,7 +81,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 service=self.service_name
             ).observe(process_time)
             
-            # Считаем ошибки 5xx
             if response.status_code >= 500:
                 http_errors_total.labels(
                     method=request.method,
@@ -110,7 +103,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 exc_info=True
             )
             
-            # Метрика для ошибок
             http_errors_total.labels(
                 method=request.method,
                 endpoint=request.url.path,
